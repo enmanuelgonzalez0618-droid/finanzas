@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="es"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b7a6b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Mis Finanzas">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Mis Finanzas</title>
+
+<style>
+html{-webkit-text-size-adjust:100%}
+/* Concepto: libreta de cobros semanales, la semana corre de viernes a jueves. */
+:root{--bg:#f2f5f7;--surface:#ffffff;--ink:#13202b;--muted:#5d6d7b;--line:#dce3e9;--accent:#0b7a6b;--accent-ink:#ffffff;--in:#0b7a6b;--out:#c2410c;--warn-bg:#fff1e8;--bar:#e6ecf0;--shadow:0 1px 2px rgba(19,32,43,.06),0 6px 20px rgba(19,32,43,.06)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0d1319;--surface:#151d25;--ink:#e8eef3;--muted:#93a3b1;--line:#26313b;--accent:#3cc4ae;--accent-ink:#06201b;--in:#3cc4ae;--out:#ff8d5e;--warn-bg:#2a1d16;--bar:#22303b;--shadow:none;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0d1319;--surface:#151d25;--ink:#e8eef3;--muted:#93a3b1;--line:#26313b;--accent:#3cc4ae;--accent-ink:#06201b;--in:#3cc4ae;--out:#ff8d5e;--warn-bg:#2a1d16;--bar:#22303b;--shadow:none;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{height:auto}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 96px;font-variant-numeric:tabular-nums}
+main{max-width:560px;margin:0 auto}
+h1,h2,h3,p{margin:0}
+.top{display:flex;align-items:center;justify-content:space-between;padding:18px 0 6px}
+.top h1{font-size:21px;font-weight:800;letter-spacing:-.01em}
+.sub{color:var(--muted);font-size:13px}
+.chips{display:flex;gap:6px;margin:10px 0 14px}
+.chip{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:7px 14px;font:600 13px system-ui,sans-serif;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:var(--shadow);margin-bottom:12px}
+.hero .lbl{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.hero .big{font-size:40px;font-weight:800;letter-spacing:-.02em;line-height:1.1;margin:4px 0 2px}
+.pos{color:var(--in)}.neg{color:var(--out)}
+.row3{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.row3 div{min-width:0}
+.row3 b{display:block;font-size:18px}
+.meter{height:10px;border-radius:99px;background:var(--bar);overflow:hidden;margin-top:12px}
+.meter i{display:block;height:100%;background:var(--out);border-radius:99px}
+.note{background:var(--warn-bg);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:12px;display:flex;gap:10px;justify-content:space-between;align-items:center}
+.note p{font-size:14px;min-width:0}
+.btn{border:0;background:var(--accent);color:var(--accent-ink);border-radius:10px;padding:10px 14px;font:700 14px system-ui,sans-serif;cursor:pointer;white-space:nowrap}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn.danger{background:transparent;color:var(--out);border:1px solid var(--out)}
+.btn:focus-visible,.chip:focus-visible,.tab:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.sec{display:flex;justify-content:space-between;align-items:center;margin:18px 0 8px}
+.sec h2{font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.list{display:flex;flex-direction:column}
+.item{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--line);cursor:pointer;background:none;border-left:0;border-right:0;border-top:0;text-align:left;width:100%;color:inherit;font:inherit}
+.item:last-child{border-bottom:0}
+.item .l{min-width:0}
+.item .l b{display:block;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.item .l span{font-size:12.5px;color:var(--muted)}
+.item .r{font-weight:700;white-space:nowrap}
+.cat{display:grid;grid-template-columns:96px 1fr auto;gap:10px;align-items:center;padding:6px 0;font-size:14px}
+.cat .bar{height:8px;background:var(--bar);border-radius:99px;overflow:hidden}
+.cat .bar i{display:block;height:100%;background:var(--out);border-radius:99px}
+.cat span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hist{display:flex;gap:8px;align-items:flex-end;height:120px;margin-top:6px}
+.hist .col{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0}
+.hist .pair{display:flex;gap:3px;align-items:flex-end;height:96px;width:100%;justify-content:center}
+.hist .pair i{width:38%;border-radius:4px 4px 0 0;min-height:2px}
+.hist .in{background:var(--in)}.hist .out{background:var(--out)}
+.hist small{font-size:11px;color:var(--muted)}
+.legend{display:flex;gap:14px;font-size:12px;color:var(--muted);margin-top:6px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.debt .head{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.debt h3{font-size:17px;font-weight:700;min-width:0;overflow-wrap:anywhere}
+.debt .rest{font-size:22px;font-weight:800}
+.debt .meter i{background:var(--in)}
+.debt .acts{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.pays{margin-top:10px;font-size:13px;color:var(--muted)}
+.pays div{display:flex;justify-content:space-between;padding:3px 0}
+.empty{color:var(--muted);text-align:center;padding:22px 8px;font-size:14px}
+nav.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);display:flex;justify-content:center;padding:6px max(8px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-left,0px));z-index:5}
+nav.tabs .in{display:flex;width:100%;max-width:560px;gap:4px}
+.tab{flex:1;border:0;background:none;color:var(--muted);font:600 12px system-ui,sans-serif;padding:8px 2px;border-radius:10px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px}
+.tab svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tab[aria-selected="true"]{color:var(--accent)}
+.fab{position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(76px + env(safe-area-inset-bottom,0px));z-index:6;border:0;border-radius:999px;background:var(--accent);color:var(--accent-ink);font:800 15px system-ui,sans-serif;padding:14px 20px;box-shadow:0 6px 20px rgba(0,0,0,.25);cursor:pointer}
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:20;display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--surface);width:100%;max-width:560px;border-radius:18px 18px 0 0;padding:18px 18px calc(18px + env(safe-area-inset-bottom,0px));max-height:92vh;overflow:auto}
+.sheet h2{font-size:18px;font-weight:800;margin-bottom:12px}
+label{display:block;font-size:12.5px;font-weight:700;color:var(--muted);margin:10px 0 4px}
+input,select{width:100%;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:12px;font:500 16px system-ui,sans-serif}
+.acts2{display:flex;gap:8px;margin-top:16px}
+.acts2 .btn{flex:1;padding:13px}
+.small{font-size:12.5px;color:var(--muted);margin-top:10px}
+.status{font-size:12px;color:var(--muted);text-align:center;margin-top:16px}
+.hide{display:none!important}
+@media (prefers-reduced-motion:no-preference){.card{animation:up .25s ease both}@keyframes up{from{opacity:.0;transform:translateY(6px)}to{opacity:1;transform:none}}}
+</style>
+
+<body>
+<main>
+  <div class="top"><div><h1>Mis Finanzas</h1><p class="sub" id="periodo"></p></div><button class="btn ghost" id="menu">Más</button></div>
+  <div id="view"></div>
+  <p class="status" id="status"></p>
+</main>
+<button class="fab" id="fab">+ Agregar</button>
+<nav class="tabs"><div class="in" role="tablist">
+  <button class="tab" role="tab" data-t="resumen"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Resumen</button>
+  <button class="tab" role="tab" data-t="cobros"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/></svg>Cobros</button>
+  <button class="tab" role="tab" data-t="gastos"><svg viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6"/></svg>Gastos</button>
+  <button class="tab" role="tab" data-t="deudas"><svg viewBox="0 0 24 24"><path d="M12 3v18M16.5 7.5C15.5 6.5 14 6 12 6c-2.5 0-4 1.2-4 3 0 4.5 8.5 2 8.5 6.500 0 1.800-1.700 3-4.500 3-2 0-3.500-.6-4.500-1.600"/></svg>Deudas</button>
+</div></nav>
+<div id="layer"></div>
+
+<script>
+const $=s=>document.querySelector(s);
+const CATS=["Comida","Vivienda","Transporte","Servicios","Salud","Ocio","Ropa","Envíos","Otros"];
+const fmt=n=>new Intl.NumberFormat("es-US",{style:"currency",currency:"USD"}).format(n||0);
+const pad=n=>String(n).padStart(2,"0");
+const iso=d=>d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
+const parseD=s=>{const[a,b,c]=s.split("-").map(Number);return new Date(a,b-1,c)};
+const todayS=()=>iso(new Date());
+const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const MES=["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+const short=s=>{const d=parseD(s);return d.getDate()+" "+MES[d.getMonth()]};
+const addDays=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x};
+// La semana empieza el viernes (día del cobro) y termina el jueves.
+const weekStart=d=>addDays(d,-((d.getDay()+2)%7));
+
+let items=[],tab="resumen",scope="week",uid=null,mode="local",saveOk=true;
+let store={add:async()=>{},update:async()=>{},remove:async()=>{}};
+
+/* ---------- almacenamiento: base de datos de la página, o este teléfono si no está disponible ---------- */
+function lsLoad(){try{return JSON.parse(localStorage.getItem("fin_items")||"[]")}catch(e){return[]}}
+function lsSave(){try{localStorage.setItem("fin_items",JSON.stringify(items))}catch(e){}}
+function useLocal(){
+  mode="local";items=lsLoad();
+  store={
+    add:async o=>{items.push({id:"l"+Date.now()+Math.random().toString(36).slice(2,6),...o});lsSave();render()},
+    update:async(id,o)=>{items=items.map(x=>x.id===id?{...x,...o}:x);lsSave();render()},
+    remove:async id=>{items=items.filter(x=>x.id!==id);lsSave();render()}
+  };
+  render();
+}
+async function boot(){
+  mode="local";items=lsLoad();
+  try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
+  store={
+    add:async o=>{items.push({id:"l"+Date.now()+Math.random().toString(36).slice(2,6),...o});lsSave();render()},
+    update:async(id,o)=>{items=items.map(x=>x.id===id?{...x,...o}:x);lsSave();render()},
+    remove:async id=>{items=items.filter(x=>x.id!==id);lsSave();render()}
+  };
+  render();
+  if("serviceWorker"in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
+}
+
+/* ---------- cálculos ---------- */
+const kind=k=>items.filter(x=>x.kind===k);
+function range(sc){
+  const n=new Date();
+  if(sc==="week"){const s=weekStart(n);return[iso(s),iso(addDays(s,6))]}
+  if(sc==="month"){return[iso(new Date(n.getFullYear(),n.getMonth(),1)),iso(new Date(n.getFullYear(),n.getMonth()+1,0))]}
+  return["0000-01-01","9999-12-31"];
+}
+const within=(d,r)=>d>=r[0]&&d<=r[1];
+function totals(r){
+  const inc=kind("income").filter(x=>within(x.date,r));
+  const exp=kind("expense").filter(x=>within(x.date,r));
+  const pay=kind("payment").filter(x=>within(x.date,r));
+  const i=inc.reduce((a,x)=>a+x.amount,0);
+  const e=exp.reduce((a,x)=>a+x.amount,0);
+  const p=pay.reduce((a,x)=>a+x.amount,0);
+  return{i,e,p,out:e+p,left:i-e-p,exp,pay,inc};
+}
+const debtPaid=id=>kind("payment").filter(p=>p.debtId===id).reduce((a,x)=>a+x.amount,0);
+
+/* ---------- vistas ---------- */
+function render(){
+  document.querySelectorAll(".tab").forEach(b=>b.setAttribute("aria-selected",b.dataset.t===tab));
+  const n=new Date(),ws=weekStart(n);
+  $("#periodo").textContent="Semana del "+short(iso(ws))+" al "+short(iso(addDays(ws,6)));
+  $("#view").innerHTML=({resumen:vResumen,cobros:vCobros,gastos:vGastos,deudas:vDeudas})[tab]();
+  $("#fab").textContent=({resumen:"+ Agregar gasto",cobros:"+ Registrar cobro",gastos:"+ Agregar gasto",deudas:"+ Nueva deuda"})[tab];
+  $("#status").textContent=mode==="db"?"Tus datos se guardan en tu cuenta y son privados.":"Tus datos se guardan solo en este teléfono. Guarda un respaldo de vez en cuando: Más → Guardar respaldo.";
+}
+function vResumen(){
+  const r=range(scope),t=totals(r),n=new Date();
+  const isFri=n.getDay()===5,gotToday=kind("income").some(x=>x.date===todayS());
+  const wk=totals(range("week"));
+  let h="";
+  if(isFri&&!gotToday)h+=`<div class="note"><p><b>Hoy es viernes.</b> ¿Ya cobraste? Anótalo para que cuadre la semana.</p><button class="btn" data-a="cobro">Registrar</button></div>`;
+  else if(wk.i===0&&n.getDay()!==5)h+=`<div class="note"><p>Todavía no anotas el cobro de esta semana.</p><button class="btn" data-a="cobro">Registrar</button></div>`;
+  else if(wk.i>0&&wk.out>wk.i)h+=`<div class="note"><p><b>Esta semana gastaste ${fmt(wk.out-wk.i)} más de lo que cobraste.</b></p></div>`;
+  h+=`<div class="chips" role="group" aria-label="Periodo">${[["week","Semana"],["month","Mes"],["all","Todo"]].map(([k,l])=>`<button class="chip" data-scope="${k}" aria-pressed="${scope===k}">${l}</button>`).join("")}</div>`;
+  const pct=t.i>0?Math.min(100,t.out/t.i*100):(t.out>0?100:0);
+  h+=`<div class="card hero"><div class="lbl">Te queda</div><div class="big ${t.left>=0?"pos":"neg"}">${fmt(t.left)}</div><p class="sub">${t.i>0?`Has gastado el ${Math.round(t.out/t.i*100)}% de lo que cobraste`:"Anota tu cobro para ver cuánto te queda"}</p>
+  <div class="meter" aria-hidden="true"><i style="width:${pct}%"></i></div>
+  <div class="row3"><div><span class="sub">Entró</span><b class="pos">${fmt(t.i)}</b></div><div><span class="sub">Salió</span><b class="neg">${fmt(t.out)}</b></div></div></div>`;
+  // por categoría
+  const cat={};t.exp.forEach(x=>cat[x.cat||"Otros"]=(cat[x.cat||"Otros"]||0)+x.amount);
+  if(t.p>0)cat["Pagos de deudas"]=t.p;
+  const ents=Object.entries(cat).sort((a,b)=>b[1]-a[1]),mx=ents.length?ents[0][1]:1;
+  h+=`<div class="sec"><h2>En qué se va</h2></div><div class="card">`+(ents.length?ents.map(([k,v])=>`<div class="cat"><span>${esc(k)}</span><span class="bar"><i style="width:${v/mx*100}%"></i></span><b>${fmt(v)}</b></div>`).join(""):`<p class="empty">Sin gastos en este periodo.</p>`)+`</div>`;
+  // últimas 6 semanas
+  const cols=[];for(let k=5;k>=0;k--){const s=addDays(weekStart(n),-7*k);const tt=totals([iso(s),iso(addDays(s,6))]);cols.push({l:short(iso(s)),i:tt.i,o:tt.out})}
+  const m2=Math.max(1,...cols.map(c=>Math.max(c.i,c.o)));
+  h+=`<div class="sec"><h2>Últimas 6 semanas</h2></div><div class="card"><div class="hist">${cols.map(c=>`<div class="col"><div class="pair"><i class="in" style="height:${c.i/m2*100}%" title="Entró ${fmt(c.i)}"></i><i class="out" style="height:${c.o/m2*100}%" title="Salió ${fmt(c.o)}"></i></div><small>${esc(c.l)}</small></div>`).join("")}</div><div class="legend"><span><i style="background:var(--in)"></i>Entró</span><span><i style="background:var(--out)"></i>Salió</span></div></div>`;
+  // deudas
+  const ds=kind("debt"),pend=ds.reduce((a,d)=>a+Math.max(0,d.total-debtPaid(d.id)),0);
+  h+=`<div class="sec"><h2>Deudas</h2></div><button class="card item" style="display:flex;border-bottom:1px solid var(--line)" data-go="deudas"><span class="l"><b>${ds.length?`Debes ${fmt(pend)}`:"Sin deudas anotadas"}</b><span>${ds.length?ds.length+" deuda"+(ds.length>1?"s":"")+" activa"+(ds.length>1?"s":""):"Toca para anotar a quién le debes"}</span></span><span class="r">›</span></button>`;
+  return h;
+}
+function vCobros(){
+  const inc=kind("income").sort((a,b)=>b.date.localeCompare(a.date));
+  const avg=inc.length?inc.reduce((a,x)=>a+x.amount,0)/inc.length:0;
+  let h=`<div class="card hero"><div class="lbl">Cobro promedio</div><div class="big pos">${fmt(avg)}</div><p class="sub">${inc.length} cobro${inc.length===1?"":"s"} registrado${inc.length===1?"":"s"}</p></div><div class="sec"><h2>Cobros</h2></div><div class="card list">`;
+  h+=inc.length?inc.map(x=>`<button class="item" data-edit="${x.id}"><span class="l"><b>${esc(x.note||"Cobro del trabajo")}</b><span>${short(x.date)}</span></span><span class="r pos">+${fmt(x.amount)}</span></button>`).join(""):`<p class="empty">Aún no hay cobros. Cada viernes, toca “Registrar cobro”.</p>`;
+  return h+`</div>`;
+}
+function vGastos(){
+  const ex=kind("expense").sort((a,b)=>b.date.localeCompare(a.date)).slice(0,200);
+  let h=`<div class="sec"><h2>Gastos recientes</h2><button class="btn ghost" data-a="import">Importar del banco</button></div><div class="card list">`;
+  h+=ex.length?ex.map(x=>`<button class="item" data-edit="${x.id}"><span class="l"><b>${esc(x.note||x.cat)}</b><span>${short(x.date)} · ${esc(x.cat)}</span></span><span class="r neg">−${fmt(x.amount)}</span></button>`).join(""):`<p class="empty">Sin gastos todavía. Toca “Agregar gasto” o importa el archivo CSV de tu banco.</p>`;
+  return h+`</div>`;
+}
+function vDeudas(){
+  const ds=kind("debt");
+  const pend=ds.reduce((a,d)=>a+Math.max(0,d.total-debtPaid(d.id)),0);
+  let h=`<div class="card hero"><div class="lbl">Total que debes</div><div class="big ${pend>0?"neg":"pos"}">${fmt(pend)}</div><p class="sub">${ds.length} deuda${ds.length===1?"":"s"} anotada${ds.length===1?"":"s"}</p></div>`;
+  if(!ds.length)return h+`<div class="card"><p class="empty">Anota a quién le debes y cuánto. Cada pago que registres baja el saldo.</p></div>`;
+  h+=ds.sort((a,b)=>(a.who||"").localeCompare(b.who||"")).map(d=>{
+    const paid=debtPaid(d.id),rest=Math.max(0,d.total-paid),pct=d.total>0?Math.min(100,paid/d.total*100):0;
+    const pays=kind("payment").filter(p=>p.debtId===d.id).sort((a,b)=>b.date.localeCompare(a.date));
+    return `<div class="card debt"><div class="head"><h3>${esc(d.who)}</h3><div class="rest ${rest>0?"neg":"pos"}">${rest>0?fmt(rest):"Pagada"}</div></div>
+    <p class="sub">${d.note?esc(d.note)+" · ":""}Total ${fmt(d.total)} · pagado ${fmt(paid)}${d.due?" · fecha límite "+short(d.due):""}</p>
+    <div class="meter" aria-hidden="true"><i style="width:${pct}%"></i></div>
+    <div class="acts"><button class="btn" data-pay="${d.id}">Registrar pago</button><button class="btn ghost" data-edit="${d.id}">Editar</button></div>
+    ${pays.length?`<div class="pays">${pays.slice(0,5).map(p=>`<div><button class="item" style="padding:3px 0;border:0;width:100%;display:flex" data-edit="${p.id}"><span>${short(p.date)}${p.note?" · "+esc(p.note):""}</span><span>${fmt(p.amount)}</span></button></div>`).join("")}${pays.length>5?`<div><span>y ${pays.length-5} pago(s) más</span></div>`:""}</div>`:""}</div>`;
+  }).join("");
+  return h;
+}
+
+/* ---------- hojas (formularios) ---------- */
+function sheet(title,body,onSave,opts={}){
+  const L=$("#layer");
+  L.innerHTML=`<div class="scrim" id="scrim"><form class="sheet" id="sheetf" role="dialog" aria-modal="true" aria-label="${esc(title)}"><h2>${esc(title)}</h2>${body}<div class="acts2">${opts.del?`<button type="button" class="btn danger" id="del">Eliminar</button>`:""}<button type="button" class="btn ghost" id="cancel">Cancelar</button>${onSave?`<button class="btn" type="submit">${opts.saveLabel||"Guardar"}</button>`:""}</div></form></div>`;
+  const close=()=>{L.innerHTML=""};
+  $("#cancel").onclick=close;
+  $("#scrim").onclick=e=>{if(e.target.id==="scrim")close()};
+  if(opts.del){let armed=false;$("#del").onclick=async()=>{if(!armed){armed=true;$("#del").textContent="Toca otra vez para borrar";return}try{await opts.del();close()}catch(e){alert_("No se pudo borrar.")}}}
+  $("#sheetf").onsubmit=async e=>{e.preventDefault();if(!onSave)return;try{const r=await onSave();if(r!==false)close()}catch(err){alert_("No se pudo guardar. Intenta otra vez.")}};
+  const f=$("#sheetf input,#sheetf select");if(f&&!opts.noFocus)setTimeout(()=>f.focus(),50);
+}
+function alert_(m){let p=$("#sheetf .err");if(!p){p=document.createElement("p");p.className="small err neg";$("#sheetf").append(p)}p.textContent=m}
+const amtField=v=>`<label for="f_amt">Monto (USD)</label><input id="f_amt" type="number" inputmode="decimal" step="0.01" min="0" required value="${v==null?"":v}">`;
+const dateField=v=>`<label for="f_date">Fecha</label><input id="f_date" type="date" required value="${v||todayS()}">`;
+const noteField=(v,l)=>`<label for="f_note">${l||"Nota (opcional)"}</label><input id="f_note" type="text" maxlength="80" value="${esc(v||"")}">`;
+const val=id=>$("#"+id).value;
+const num=()=>{const n=parseFloat(val("f_amt"));return isFinite(n)&&n>0?Math.round(n*100)/100:null};
+
+function fGasto(x){
+  sheet(x?"Editar gasto":"Nuevo gasto",amtField(x&&x.amount)+`<label for="f_cat">Categoría</label><select id="f_cat">${CATS.map(c=>`<option ${x&&x.cat===c?"selected":""}>${c}</option>`).join("")}</select>`+dateField(x&&x.date)+noteField(x&&x.note,"En qué (opcional)"),async()=>{
+    const a=num();if(!a)return alert_("Escribe un monto mayor que 0.")||false;
+    const o={kind:"expense",amount:a,cat:val("f_cat"),date:val("f_date"),note:val("f_note").trim()};
+    x?await store.update(x.id,o):await store.add(o)},x?{del:()=>store.remove(x.id)}:{});
+}
+function fCobro(x){
+  sheet(x?"Editar cobro":"Cobro del viernes",amtField(x&&x.amount)+dateField(x&&x.date)+noteField(x&&x.note,"Nota (horas, empresa…)"),async()=>{
+    const a=num();if(!a)return alert_("Escribe lo que cobraste.")||false;
+    const o={kind:"income",amount:a,date:val("f_date"),note:val("f_note").trim()};
+    x?await store.update(x.id,o):await store.add(o)},x?{del:()=>store.remove(x.id)}:{});
+}
+function fDeuda(x){
+  sheet(x?"Editar deuda":"Nueva deuda",`<label for="f_who">¿A quién se la debes?</label><input id="f_who" type="text" maxlength="60" required value="${esc(x&&x.who||"")}">`+`<label for="f_amt">Total que debes (USD)</label><input id="f_amt" type="number" inputmode="decimal" step="0.01" min="0" required value="${x?x.total:""}">`+noteField(x&&x.note,"Nota (opcional)")+`<label for="f_due">Fecha límite (opcional)</label><input id="f_due" type="date" value="${x&&x.due||""}">`,async()=>{
+    const a=num();if(!a)return alert_("Escribe cuánto debes.")||false;
+    const o={kind:"debt",who:val("f_who").trim(),total:a,note:val("f_note").trim(),due:val("f_due")};
+    if(!o.who)return alert_("Escribe a quién se la debes.")||false;
+    x?await store.update(x.id,o):await store.add(o)},x?{del:async()=>{for(const p of kind("payment").filter(p=>p.debtId===x.id))await store.remove(p.id);await store.remove(x.id)}}:{});
+}
+function fPago(d,x){
+  sheet(x?"Editar pago":"Pago a "+d.who,amtField(x&&x.amount)+dateField(x&&x.date)+noteField(x&&x.note),async()=>{
+    const a=num();if(!a)return alert_("Escribe cuánto pagaste.")||false;
+    const o={kind:"payment",debtId:d.id,amount:a,date:val("f_date"),note:val("f_note").trim()};
+    x?await store.update(x.id,o):await store.add(o)},x?{del:()=>store.remove(x.id)}:{});
+}
+function editItem(id){
+  const x=items.find(i=>i.id===id);if(!x)return;
+  if(x.kind==="expense")fGasto(x);else if(x.kind==="income")fCobro(x);else if(x.kind==="debt")fDeuda(x);
+  else if(x.kind==="payment"){const d=items.find(i=>i.id===x.debtId);if(d)fPago(d,x)}
+}
+
+/* ---------- importar el CSV del banco ---------- */
+function parseCSV(t){
+  const first=t.split(/\r?\n/)[0]||"";
+  const del=(first.match(/;/g)||[]).length>(first.match(/,/g)||[]).length?";":",";
+  const rows=[];let row=[],cur="",q=false;
+  for(let i=0;i<t.length;i++){const c=t[i];
+    if(q){if(c==='"'){if(t[i+1]==='"'){cur+='"';i++}else q=false}else cur+=c}
+    else if(c==='"')q=true;
+    else if(c===del){row.push(cur);cur=""}
+    else if(c==="\n"||c==="\r"){if(c==="\r"&&t[i+1]==="\n")i++;row.push(cur);cur="";if(row.some(x=>x.trim()))rows.push(row);row=[]}
+    else cur+=c}
+  if(cur||row.length){row.push(cur);if(row.some(x=>x.trim()))rows.push(row)}
+  return rows;
+}
+const GUESS=[[/shell|chevron|exxon|gas\b|fuel|uber|lyft|metro|bus/i,"Transporte"],[/walmart|target|kroger|safeway|grocer|food|restaur|mcdonald|taco|pizza|cafe|coffee|starbucks|doordash|market/i,"Comida"],[/rent|landlord|apartment|mortgage|renta/i,"Vivienda"],[/at&t|verizon|t-mobile|comcast|spectrum|electric|water|internet|phone|netflix|spotify/i,"Servicios"],[/pharm|cvs|walgreens|clinic|doctor|hospital|dental/i,"Salud"],[/western union|remitly|zelle|wise|xoom|remesa/i,"Envíos"]];
+const guessCat=s=>{for(const[r,c]of GUESS)if(r.test(s))return c;return"Otros"};
+function moneyNum(s){s=String(s||"").trim();if(!s)return NaN;let neg=/^\(.*\)$/.test(s)||/^-/.test(s)||/-$/.test(s);const n=parseFloat(s.replace(/[^0-9.,]/g,"").replace(/,(?=\d{3}\b)/g,"").replace(",","."));return isNaN(n)?NaN:(neg?-n:n)}
+function dateNum(s,dmy){s=String(s||"").trim();let m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);if(m)return m[1]+"-"+pad(m[2])+"-"+pad(m[3]);m=s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})/);if(!m)return null;let a=+m[1],b=+m[2],y=+m[3];if(y<100)y+=2000;const mo=dmy?b:a,da=dmy?a:b;if(mo<1||mo>12||da<1||da>31)return null;return y+"-"+pad(mo)+"-"+pad(da)}
+function fImport(){
+  sheet("Importar del banco",`<p class="small" style="margin-top:0">En la app o la página de tu banco, descarga tus movimientos como archivo CSV y elígelo aquí. Aquí no se pide ninguna clave del banco.</p>
+  <label for="f_file">Archivo CSV</label><input id="f_file" type="file" accept=".csv,text/csv,.txt">
+  <label for="f_fmt">Formato de fecha</label><select id="f_fmt"><option value="mdy">mes/día/año (EE. UU.)</option><option value="dmy">día/mes/año</option></select>
+  <label for="f_sign">En el archivo, los gastos son</label><select id="f_sign"><option value="neg">números negativos</option><option value="pos">números positivos</option></select>
+  <label for="f_dep">Depósitos</label><select id="f_dep"><option value="skip">No importar (yo anoto mi cobro)</option><option value="inc">Importar como cobros</option></select>
+  <p class="small" id="f_info"></p>`,async()=>{
+    const file=$("#f_file").files[0];if(!file)return alert_("Elige el archivo CSV.")||false;
+    const text=await file.text(),rows=parseCSV(text);
+    const hi=rows.findIndex(r=>r.some(c=>/^(fecha|date|posted|transaction date|post date)/i.test(c.trim())));
+    if(hi<0)return alert_("No encontré la columna de fecha. Revisa que el archivo tenga encabezados.")||false;
+    const H=rows[hi].map(c=>c.trim()),find=re=>H.findIndex(c=>re.test(c));
+    const di=find(/^(fecha|date|posted|transaction date|post date)/i),ci=find(/descrip|concepto|detail|memo|payee|name|merchant/i),ai=find(/^(amount|monto|importe)/i),dbi=find(/debit|cargo|retiro|withdraw/i),cri=find(/credit|abono|dep[oó]sito|deposit/i);
+    if(ai<0&&dbi<0&&cri<0)return alert_("No encontré la columna del monto.")||false;
+    const dmy=val("f_fmt")==="dmy",expNeg=val("f_sign")==="neg",wantInc=val("f_dep")==="inc";
+    const have=new Set(items.filter(x=>x.src==="csv").map(x=>[x.date,x.amount,x.note].join("|")));
+    const out=[];let bad=0,dup=0;
+    for(const r of rows.slice(hi+1)){
+      const date=dateNum(r[di],dmy);if(!date){bad++;continue}
+      const note=(ci>=0?r[ci]:"").trim().slice(0,80);let amt=NaN,isExp=true;
+      if(ai>=0){amt=moneyNum(r[ai]);if(isNaN(amt)){bad++;continue}isExp=expNeg?amt<0:amt>0;amt=Math.abs(amt)}
+      else{const d=moneyNum(r[dbi]),c=moneyNum(r[cri]);if(!isNaN(d)&&d!==0){amt=Math.abs(d);isExp=true}else if(!isNaN(c)&&c!==0){amt=Math.abs(c);isExp=false}else{bad++;continue}}
+      amt=Math.round(amt*100)/100;if(!(amt>0))continue;
+      if(!isExp&&!wantInc)continue;
+      const key=[date,amt,note].join("|");if(have.has(key)){dup++;continue}have.add(key);
+      out.push(isExp?{kind:"expense",amount:amt,cat:guessCat(note),date,note,src:"csv"}:{kind:"income",amount:amt,date,note:note||"Depósito",src:"csv"});
+    }
+    if(!out.length)return alert_("No hay movimientos nuevos para importar"+(dup?" ("+dup+" ya estaban)":"")+".")||false;
+    $("#f_info").textContent="Importando "+out.length+"…";
+    let n=0;for(const o of out){await store.add(o);n++;if(n%20===0)$("#f_info").textContent="Importando "+n+" de "+out.length+"…"}
+    tab="gastos";render();
+  },{saveLabel:"Importar",noFocus:true});
+}
+
+/* ---------- respaldo ---------- */
+function backup(){
+  const data=JSON.stringify({app:"mis-finanzas",version:1,exportado:todayS(),items},null,1);
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([data],{type:"application/json"}));a.download="mis-finanzas-"+todayS()+".json";document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+}
+function fRestore(){
+  sheet("Restaurar respaldo",`<p class="small" style="margin-top:0">Elige un archivo de respaldo (.json) que descargaste antes. Se agregan los movimientos que no estén ya en la app.</p><label for="f_file">Archivo de respaldo</label><input id="f_file" type="file" accept=".json,application/json">`,async()=>{
+    const f=$("#f_file").files[0];if(!f)return alert_("Elige el archivo.")||false;
+    let d;try{d=JSON.parse(await f.text())}catch(e){return alert_("Ese archivo no se pudo leer.")||false}
+    if(!d||d.app!=="mis-finanzas"||!Array.isArray(d.items))return alert_("Ese archivo no es un respaldo de esta app.")||false;
+    const have=new Set(items.map(x=>x.id));let n=0;
+    for(const x of d.items){if(x&&x.id&&x.kind&&!have.has(x.id)){items.push(x);n++}}
+    lsSave();render();
+  },{saveLabel:"Restaurar",noFocus:true});
+}
+function fMenu(){
+  sheet("Más",`<div class="acts2" style="flex-direction:column;margin-top:0"><button type="button" class="btn ghost" id="m_imp">Importar movimientos del banco (CSV)</button><button type="button" class="btn ghost" id="m_bk">Guardar respaldo (archivo)</button><button type="button" class="btn ghost" id="m_rs">Restaurar un respaldo</button></div><p class="small">Tus datos viven solo en este teléfono. Guarda un respaldo de vez en cuando por si cambias de teléfono. Las semanas van de viernes a jueves.</p>`,null);
+  $("#m_imp").onclick=()=>fImport();$("#m_bk").onclick=()=>{$("#layer").innerHTML="";backup()};$("#m_rs").onclick=()=>fRestore();
+}
+
+/* ---------- eventos ---------- */
+document.addEventListener("click",e=>{
+  const b=e.target.closest("button");if(!b)return;
+  if(b.dataset.t){tab=b.dataset.t;render();window.scrollTo(0,0);return}
+  if(b.dataset.scope){scope=b.dataset.scope;render();return}
+  if(b.dataset.go){tab=b.dataset.go;render();window.scrollTo(0,0);return}
+  if(b.dataset.edit){editItem(b.dataset.edit);return}
+  if(b.dataset.pay){const d=items.find(x=>x.id===b.dataset.pay);if(d)fPago(d);return}
+  if(b.dataset.a==="cobro"){fCobro();return}
+  if(b.dataset.a==="import"){fImport();return}
+});
+$("#fab").onclick=()=>({resumen:fGasto,cobros:fCobro,gastos:fGasto,deudas:fDeuda})[tab]();
+$("#menu").onclick=fMenu;
+boot();
+</script>
+</body></html>
