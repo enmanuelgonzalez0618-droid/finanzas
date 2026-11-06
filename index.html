@@ -102,6 +102,7 @@ input,select{width:100%;background:var(--bg);color:var(--ink);border:1px solid v
   <button class="tab" role="tab" data-t="resumen"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Resumen</button>
   <button class="tab" role="tab" data-t="cobros"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/></svg>Cobros</button>
   <button class="tab" role="tab" data-t="gastos"><svg viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6"/></svg>Gastos</button>
+  <button class="tab" role="tab" data-t="bills"><svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h4"/></svg>Bills</button>
   <button class="tab" role="tab" data-t="deudas"><svg viewBox="0 0 24 24"><path d="M12 3v18M16.5 7.5C15.5 6.5 14 6 12 6c-2.5 0-4 1.2-4 3 0 4.5 8.5 2 8.5 6.500 0 1.800-1.700 3-4.500 3-2 0-3.500-.6-4.500-1.600"/></svg>Deudas</button>
 </div></nav>
 <div id="layer"></div>
@@ -164,17 +165,30 @@ function totals(r){
   const i=inc.reduce((a,x)=>a+x.amount,0);
   const e=exp.reduce((a,x)=>a+x.amount,0);
   const p=pay.reduce((a,x)=>a+x.amount,0);
-  return{i,e,p,out:e+p,left:i-e-p,exp,pay,inc};
+  const b=kind("billpaid").filter(x=>within(x.date,r)).reduce((a,x)=>a+x.amount,0);
+  return{i,e,p,b,out:e+p+b,left:i-e-p-b,exp,pay,inc};
 }
 const debtPaid=id=>kind("payment").filter(p=>p.debtId===id).reduce((a,x)=>a+x.amount,0);
+
+const monthKey=()=>todayS().slice(0,7);
+const billPaidRec=(b,m)=>kind("billpaid").find(x=>x.billId===b.id&&x.month===m);
+function monthPlan(){
+  const m=monthKey(),r=range("month"),inc=totals(r).i;
+  const bs=kind("bill");
+  let planned=0,paid=0,nPaid=0;
+  bs.forEach(b=>{const p=billPaidRec(b,m);planned+=p?p.amount:b.amount;if(p){paid+=p.amount;nPaid++}});
+  const debtPay=totals(r).p;
+  return{m,inc,bs,planned,paid,nPaid,pending:planned-paid,left:inc-planned,debtPay,afterDebt:inc-planned-debtPay};
+}
+const MESN=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
 
 /* ---------- vistas ---------- */
 function render(){
   document.querySelectorAll(".tab").forEach(b=>b.setAttribute("aria-selected",b.dataset.t===tab));
   const n=new Date(),ws=weekStart(n);
   $("#periodo").textContent="Semana del "+short(iso(ws))+" al "+short(iso(addDays(ws,6)));
-  $("#view").innerHTML=({resumen:vResumen,cobros:vCobros,gastos:vGastos,deudas:vDeudas})[tab]();
-  $("#fab").textContent=({resumen:"+ Agregar gasto",cobros:"+ Registrar cobro",gastos:"+ Agregar gasto",deudas:"+ Nueva deuda"})[tab];
+  $("#view").innerHTML=({resumen:vResumen,cobros:vCobros,gastos:vGastos,bills:vBills,deudas:vDeudas})[tab]();
+  $("#fab").textContent=({resumen:"+ Agregar gasto",cobros:"+ Registrar cobro",gastos:"+ Agregar gasto",bills:"+ Agregar bill",deudas:"+ Nueva deuda"})[tab];
   $("#status").textContent=mode==="db"?"Tus datos se guardan en tu cuenta y son privados.":"Tus datos se guardan solo en este teléfono. Guarda un respaldo de vez en cuando: Más → Guardar respaldo.";
 }
 function vResumen(){
@@ -192,6 +206,7 @@ function vResumen(){
   <div class="row3"><div><span class="sub">Entró</span><b class="pos">${fmt(t.i)}</b></div><div><span class="sub">Salió</span><b class="neg">${fmt(t.out)}</b></div></div></div>`;
   // por categoría
   const cat={};t.exp.forEach(x=>cat[x.cat||"Otros"]=(cat[x.cat||"Otros"]||0)+x.amount);
+  if(t.b>0)cat["Bills"]=t.b;
   if(t.p>0)cat["Pagos de deudas"]=t.p;
   const ents=Object.entries(cat).sort((a,b)=>b[1]-a[1]),mx=ents.length?ents[0][1]:1;
   h+=`<div class="sec"><h2>En qué se va</h2></div><div class="card">`+(ents.length?ents.map(([k,v])=>`<div class="cat"><span>${esc(k)}</span><span class="bar"><i style="width:${v/mx*100}%"></i></span><b>${fmt(v)}</b></div>`).join(""):`<p class="empty">Sin gastos en este periodo.</p>`)+`</div>`;
@@ -199,10 +214,25 @@ function vResumen(){
   const cols=[];for(let k=5;k>=0;k--){const s=addDays(weekStart(n),-7*k);const tt=totals([iso(s),iso(addDays(s,6))]);cols.push({l:short(iso(s)),i:tt.i,o:tt.out})}
   const m2=Math.max(1,...cols.map(c=>Math.max(c.i,c.o)));
   h+=`<div class="sec"><h2>Últimas 6 semanas</h2></div><div class="card"><div class="hist">${cols.map(c=>`<div class="col"><div class="pair"><i class="in" style="height:${c.i/m2*100}%" title="Entró ${fmt(c.i)}"></i><i class="out" style="height:${c.o/m2*100}%" title="Salió ${fmt(c.o)}"></i></div><small>${esc(c.l)}</small></div>`).join("")}</div><div class="legend"><span><i style="background:var(--in)"></i>Entró</span><span><i style="background:var(--out)"></i>Salió</span></div></div>`;
+  if(kind("bill").length){const P=monthPlan();h+=`<div class="sec"><h2>Bills del mes</h2></div><button class="card item" style="display:flex;border-bottom:1px solid var(--line)" data-go="bills"><span class="l"><b>Para deudas: <span class="${P.left>=0?"pos":"neg"}">${fmt(P.left)}</span></b><span>Cobrado ${fmt(P.inc)} − bills ${fmt(P.planned)} · ${P.nPaid} de ${P.bs.length} pagados</span></span><span class="r">›</span></button>`}
   // deudas
   const ds=kind("debt"),pend=ds.reduce((a,d)=>a+Math.max(0,d.total-debtPaid(d.id)),0);
   h+=`<div class="sec"><h2>Deudas</h2></div><button class="card item" style="display:flex;border-bottom:1px solid var(--line)" data-go="deudas"><span class="l"><b>${ds.length?`Debes ${fmt(pend)}`:"Sin deudas anotadas"}</b><span>${ds.length?ds.length+" deuda"+(ds.length>1?"s":"")+" activa"+(ds.length>1?"s":""):"Toca para anotar a quién le debes"}</span></span><span class="r">›</span></button>`;
   return h;
+}
+function vBills(){
+  const P=monthPlan(),n=new Date(),today=n.getDate();
+  const mes=MESN[n.getMonth()];
+  let h=`<div class="card hero"><div class="lbl">Para tus deudas en ${mes}</div><div class="big ${P.left>=0?"pos":"neg"}">${fmt(P.left)}</div><p class="sub">${P.inc>0?"Lo que cobraste este mes menos todos tus bills":"Anota tus cobros para calcular cuánto te queda"}</p>
+  <div class="row3"><div><span class="sub">Cobrado en el mes</span><b class="pos">${fmt(P.inc)}</b></div><div><span class="sub">Bills del mes</span><b class="neg">${fmt(P.planned)}</b></div></div>
+  <div class="row3"><div><span class="sub">Bills ya pagados</span><b>${fmt(P.paid)}</b></div><div><span class="sub">Bills por pagar</span><b>${fmt(P.pending)}</b></div></div>
+  ${P.debtPay>0?`<p class="sub" style="margin-top:12px">Ya pagaste ${fmt(P.debtPay)} a deudas este mes. Todavía te quedan <b class="${P.afterDebt>=0?"pos":"neg"}">${fmt(P.afterDebt)}</b>.</p>`:""}</div>`;
+  h+=`<div class="sec"><h2>Mis bills</h2></div><div class="card list">`;
+  if(!P.bs.length)h+=`<p class="empty">Anota tus bills de cada mes (renta, luz, teléfono, carro…). Se repiten solos cada mes.</p>`;
+  else h+=P.bs.slice().sort((a,b)=>(a.day||99)-(b.day||99)).map(b=>{
+    const p=billPaidRec(b,P.m),late=!p&&b.day&&b.day<today;
+    return `<div class="item" style="cursor:default"><button class="l" style="all:unset;cursor:pointer;min-width:0;flex:1" data-edit="${b.id}"><b>${esc(b.name)}</b><span>${b.day?"Vence el día "+b.day:"Sin fecha"} · ${fmt(p?p.amount:b.amount)}${late?" · <b class=\"neg\" style=\"display:inline\">vencido</b>":""}</span></button>${p?`<button class="btn ghost" data-unpaybill="${p.id}">Pagado ✓</button>`:`<button class="btn" data-paybill="${b.id}">Pagar</button>`}</div>`}).join("");
+  return h+`</div><p class="small">Al tocar “Pagar” el bill se anota como gasto de hoy. Si te equivocas, toca “Pagado ✓” para deshacerlo. El mes nuevo empieza con todos por pagar.</p>`;
 }
 function vCobros(){
   const inc=kind("income").sort((a,b)=>b.date.localeCompare(a.date));
@@ -271,6 +301,14 @@ function fDeuda(x){
     if(!o.who)return alert_("Escribe a quién se la debes.")||false;
     x?await store.update(x.id,o):await store.add(o)},x?{del:async()=>{for(const p of kind("payment").filter(p=>p.debtId===x.id))await store.remove(p.id);await store.remove(x.id)}}:{});
 }
+function fBill(x){
+  sheet(x?"Editar bill":"Nuevo bill",`<label for="f_name">¿Cuál bill es?</label><input id="f_name" type="text" maxlength="40" required placeholder="Renta, luz, teléfono…" value="${esc(x&&x.name||"")}">`+amtField(x&&x.amount)+`<label for="f_day">Día del mes en que vence (1–31)</label><input id="f_day" type="number" inputmode="numeric" min="1" max="31" value="${x&&x.day||""}">`,async()=>{
+    const a=num();if(!a)return alert_("Escribe el monto del bill.")||false;
+    const name=val("f_name").trim();if(!name)return alert_("Escribe el nombre del bill.")||false;
+    const d=parseInt(val("f_day"),10);
+    const o={kind:"bill",name,amount:a,day:d>=1&&d<=31?d:0};
+    x?await store.update(x.id,o):await store.add(o)},x?{del:async()=>{for(const p of kind("billpaid").filter(p=>p.billId===x.id))await store.remove(p.id);await store.remove(x.id)}}:{});
+}
 function fPago(d,x){
   sheet(x?"Editar pago":"Pago a "+d.who,amtField(x&&x.amount)+dateField(x&&x.date)+noteField(x&&x.note),async()=>{
     const a=num();if(!a)return alert_("Escribe cuánto pagaste.")||false;
@@ -279,7 +317,7 @@ function fPago(d,x){
 }
 function editItem(id){
   const x=items.find(i=>i.id===id);if(!x)return;
-  if(x.kind==="expense")fGasto(x);else if(x.kind==="income")fCobro(x);else if(x.kind==="debt")fDeuda(x);
+  if(x.kind==="expense")fGasto(x);else if(x.kind==="income")fCobro(x);else if(x.kind==="debt")fDeuda(x);else if(x.kind==="bill")fBill(x);
   else if(x.kind==="payment"){const d=items.find(i=>i.id===x.debtId);if(d)fPago(d,x)}
 }
 
@@ -363,10 +401,12 @@ document.addEventListener("click",e=>{
   if(b.dataset.go){tab=b.dataset.go;render();window.scrollTo(0,0);return}
   if(b.dataset.edit){editItem(b.dataset.edit);return}
   if(b.dataset.pay){const d=items.find(x=>x.id===b.dataset.pay);if(d)fPago(d);return}
+  if(b.dataset.paybill){const bl=items.find(x=>x.id===b.dataset.paybill);if(bl&&!billPaidRec(bl,monthKey()))store.add({kind:"billpaid",billId:bl.id,month:monthKey(),amount:bl.amount,date:todayS(),note:bl.name});return}
+  if(b.dataset.unpaybill){store.remove(b.dataset.unpaybill);return}
   if(b.dataset.a==="cobro"){fCobro();return}
   if(b.dataset.a==="import"){fImport();return}
 });
-$("#fab").onclick=()=>({resumen:fGasto,cobros:fCobro,gastos:fGasto,deudas:fDeuda})[tab]();
+$("#fab").onclick=()=>({resumen:fGasto,cobros:fCobro,gastos:fGasto,bills:fBill,deudas:fDeuda})[tab]();
 $("#menu").onclick=fMenu;
 boot();
 </script>
