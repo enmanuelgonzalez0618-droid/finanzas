@@ -340,14 +340,15 @@ const guessCat=s=>{for(const[r,c]of GUESS)if(r.test(s))return c;return"Otros"};
 function moneyNum(s){s=String(s||"").trim();if(!s)return NaN;let neg=/^\(.*\)$/.test(s)||/^-/.test(s)||/-$/.test(s);const n=parseFloat(s.replace(/[^0-9.,]/g,"").replace(/,(?=\d{3}\b)/g,"").replace(",","."));return isNaN(n)?NaN:(neg?-n:n)}
 function dateNum(s,dmy){s=String(s||"").trim();let m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);if(m)return m[1]+"-"+pad(m[2])+"-"+pad(m[3]);m=s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})/);if(!m)return null;let a=+m[1],b=+m[2],y=+m[3];if(y<100)y+=2000;const mo=dmy?b:a,da=dmy?a:b;if(mo<1||mo>12||da<1||da>31)return null;return y+"-"+pad(mo)+"-"+pad(da)}
 function fImport(){
-  sheet("Importar del banco",`<p class="small" style="margin-top:0">En la app o la página de tu banco, descarga tus movimientos como archivo CSV y elígelo aquí. Aquí no se pide ninguna clave del banco.</p>
+  sheet("Importar del banco",`<p class="small" style="margin-top:0">En la app o la página de tu banco, descarga tus movimientos como archivo CSV y elígelo aquí, o pega el texto abajo. Aquí no se pide ninguna clave del banco.</p>
   <label for="f_file">Archivo CSV</label><input id="f_file" type="file" accept=".csv,text/csv,.txt">
+  <label for="f_paste">O pega aquí el texto de los movimientos</label><textarea id="f_paste" rows="4" placeholder="Fecha,Descripción,Monto" style="width:100%;font:inherit;font-size:14px;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink)"></textarea>
   <label for="f_fmt">Formato de fecha</label><select id="f_fmt"><option value="mdy">mes/día/año (EE. UU.)</option><option value="dmy">día/mes/año</option></select>
   <label for="f_sign">En el archivo, los gastos son</label><select id="f_sign"><option value="neg">números negativos</option><option value="pos">números positivos</option></select>
   <label for="f_dep">Depósitos</label><select id="f_dep"><option value="skip">No importar (yo anoto mi cobro)</option><option value="inc">Importar como cobros</option></select>
   <p class="small" id="f_info"></p>`,async()=>{
-    const file=$("#f_file").files[0];if(!file)return alert_("Elige el archivo CSV.")||false;
-    const text=await file.text(),rows=parseCSV(text);
+    const file=$("#f_file").files[0],pasted=$("#f_paste").value.trim();if(!file&&!pasted)return alert_("Elige el archivo CSV o pega el texto.")||false;
+    const text=file?await file.text():pasted,rows=parseCSV(text);
     const hi=rows.findIndex(r=>r.some(c=>/^(fecha|date|posted|transaction date|post date)/i.test(c.trim())));
     if(hi<0)return alert_("No encontré la columna de fecha. Revisa que el archivo tenga encabezados.")||false;
     const H=rows[hi].map(c=>c.trim()),find=re=>H.findIndex(c=>re.test(c));
